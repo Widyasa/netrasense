@@ -20,5 +20,8 @@
     "node": ">=20",
     "pnpm": ">=9"
   },
-  "packageManager": "pnpm@10.24.0"
+  "packageManager": "pnpm@10.24.0",
+  "pnpm": {
+    "onlyBuiltDependencies": ["core-js", "esbuild", "keccak", "secp256k1", "unrs-resolver"]
+  }
 }
