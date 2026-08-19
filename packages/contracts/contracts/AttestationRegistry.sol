@@ -10,14 +10,19 @@ contract AttestationRegistry {
         bytes8 geohashPrefix;
         uint32 pointCount;
         address[] witnesses;
+        uint64 submittedAt;
         uint64 validatedAt;
         Status status;
     }
 
     mapping(bytes32 => Batch) public batches;
 
+    uint64 public constant EXPIRY_SECONDS = 180 days;
+
     event BatchSubmitted(bytes32 indexed batchId, bytes32 dataHash);
     event BatchValidated(bytes32 indexed batchId, address[] witnesses);
+    event BatchDisputed(bytes32 indexed batchId, string reason);
+    event BatchExpired(bytes32 indexed batchId);
 
     function submitBatch(
         bytes32 batchId,
@@ -33,6 +38,7 @@ contract AttestationRegistry {
             geohashPrefix: geohashPrefix,
             pointCount: pointCount,
             witnesses: new address[](0),
+            submittedAt: uint64(block.timestamp),
             validatedAt: 0,
             status: Status.Provisional
         });
@@ -49,5 +55,26 @@ contract AttestationRegistry {
             batch.validatedAt = uint64(block.timestamp);
             emit BatchValidated(batchId, batch.witnesses);
         }
+    }
+
+    function dispute(bytes32 batchId, string calldata reason) external {
+        Batch storage batch = batches[batchId];
+        require(batch.dataHash != 0, "not found");
+        require(batch.status == Status.Provisional || batch.status == Status.Validated, "cannot dispute");
+        batch.status = Status.Disputed;
+        emit BatchDisputed(batchId, reason);
+    }
+
+    function expire(bytes32 batchId) external {
+        Batch storage batch = batches[batchId];
+        require(batch.dataHash != 0, "not found");
+        require(batch.status == Status.Provisional, "cannot expire");
+        require(block.timestamp >= batch.submittedAt + EXPIRY_SECONDS, "not expired");
+        batch.status = Status.Expired;
+        emit BatchExpired(batchId);
+    }
+
+    function getBatch(bytes32 batchId) external view returns (Batch memory) {
+        return batches[batchId];
     }
 }

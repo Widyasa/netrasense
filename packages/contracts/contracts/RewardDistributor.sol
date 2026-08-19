@@ -9,10 +9,11 @@ interface IAttestationRegistry {
         bytes8 geohashPrefix;
         uint32 pointCount;
         address[] witnesses;
+        uint64 submittedAt;
         uint64 validatedAt;
         Status status;
     }
-    function batches(bytes32 batchId) external view returns (Batch memory);
+    function getBatch(bytes32 batchId) external view returns (Batch memory);
 }
 
 contract RewardDistributor {
@@ -28,11 +29,19 @@ contract RewardDistributor {
     }
 
     function recordReward(bytes32 batchId, address contributor) external {
-        IAttestationRegistry.Batch memory batch = attestationRegistry.batches(batchId);
+        IAttestationRegistry.Batch memory batch = attestationRegistry.getBatch(batchId);
         require(batch.status == IAttestationRegistry.Status.Validated, "not validated");
         uint256 amount = uint256(batch.pointCount) * 1 ether;
         pending[contributor] += amount;
         emit RewardRecorded(contributor, batchId, amount);
+    }
+
+    function pendingOf(address contributor) external view returns (uint256) {
+        return pending[contributor];
+    }
+
+    function claimedOf(address contributor) external view returns (uint256) {
+        return claimed[contributor];
     }
 
     function claim() external {
