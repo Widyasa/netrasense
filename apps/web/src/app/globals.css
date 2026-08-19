@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: "Atkinson";
+  src: url("https://fonts.cdnfonts.com/s/36916/AtkinsonHyperlegible-Regular.woff") format("woff");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Atkinson";
+  src: url("https://fonts.cdnfonts.com/s/36916/AtkinsonHyperlegible-Bold.woff") format("woff");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --font-atkinson: "Atkinson", system-ui, sans-serif;
+  --font-space-grotesk: "Space Grotesk", system-ui, sans-serif;
+  --font-jetbrains-mono: "JetBrains Mono", monospace;
+}
+
+@layer base {
+  body {
+    @apply bg-paper text-ink antialiased;
+    font-family: var(--font-atkinson);
+  }
+
+  *:focus-visible {
+    @apply outline-none ring-[3px] ring-ink-3 ring-offset-2 ring-offset-paper;
+  }
+}
