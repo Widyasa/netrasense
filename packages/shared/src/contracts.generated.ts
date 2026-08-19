@@ -436,6 +436,19 @@ export const rewardDistributorAbi = [
     "inputs": [
       {
         "internalType": "address",
+        "name": "contributor",
+        "type": "address"
+      }
+    ],
+    "name": "claimFor",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
         "name": "",
         "type": "address"
       }

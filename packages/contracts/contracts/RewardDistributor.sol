@@ -45,10 +45,21 @@ contract RewardDistributor {
     }
 
     function claim() external {
-        uint256 amount = pending[msg.sender];
+        _claim(msg.sender);
+    }
+
+    /// @dev Demo-only: lets the deployer/backend signer settle a claim on behalf of
+    /// any contributor (e.g. a custodial demo wallet that never signs its own txs).
+    /// No access control — this is explicitly non-production per project constraints.
+    function claimFor(address contributor) external {
+        _claim(contributor);
+    }
+
+    function _claim(address contributor) private {
+        uint256 amount = pending[contributor];
         require(amount > 0, "nothing to claim");
-        pending[msg.sender] = 0;
-        claimed[msg.sender] += amount;
-        emit RewardClaimed(msg.sender, amount);
+        pending[contributor] = 0;
+        claimed[contributor] += amount;
+        emit RewardClaimed(contributor, amount);
     }
 }
