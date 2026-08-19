@@ -10,6 +10,7 @@
     "format": "prettier --write ."
   },
   "dependencies": {
+    "@neondatabase/serverless": "^0.10.0",
     "@netrasense/shared": "workspace:*",
     "@tensorflow-models/coco-ssd": "^2.2.3",
     "@tensorflow/tfjs": "^4.20.0",

@@ -15,6 +15,9 @@ packages/contracts/cache/
 packages/contracts/typechain-types/
 packages/contracts/coverage/
 
+# Demo-grade JSON-file DB fallback
+apps/web/data/
+
 # Environment
 .env
 .env.local
