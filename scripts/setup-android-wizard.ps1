@@ -93,21 +93,22 @@ if (Test-Path $SdkMgr) {
     }
 }
 
+function Test-CommandExitZero {
+    param([string]$FilePath, [string]$ArgumentList)
+    try {
+        $p = Start-Process -FilePath $FilePath -ArgumentList $ArgumentList -NoNewWindow -Wait -PassThru
+        return $p.ExitCode -eq 0
+    } catch { return $false }
+}
+
 # Stage 4: Verify
 Write-Banner "Verify" $CurrentStage $Stages; $CurrentStage++
-$VerifyList = @(
-    @{ Cmd = "`"$JavaHome\bin\java.exe`" -version"; Msg = "Java" },
-    @{ Cmd = "`"$JavaHome\bin\javac.exe`" -version"; Msg = "Javac" },
-    @{ Cmd = "$AndroidHome\platform-tools\adb.exe --version"; Msg = "ADB" },
-    @{ Cmd = "npx expo --version"; Msg = "Expo" },
-    @{ Cmd = ".\apps\mobile\android\gradlew.bat --version"; Msg = "Gradle" }
-)
-foreach ($Item in $VerifyList) {
-    try {
-        Invoke-Expression $Item.Cmd 2>&1 | Out-Null
-        Write-Host "$($Item.Msg): Pass" -ForegroundColor Green
-    } catch { Write-Host "$($Item.Msg): Fail" -ForegroundColor Red }
-}
+if (Test-CommandExitZero -FilePath "$JavaHome\bin\java.exe" -ArgumentList '-version') { Write-Host "Java: Pass" -ForegroundColor Green } else { Write-Host "Java: Fail" -ForegroundColor Red }
+if (Test-CommandExitZero -FilePath "$JavaHome\bin\javac.exe" -ArgumentList '-version') { Write-Host "Javac: Pass" -ForegroundColor Green } else { Write-Host "Javac: Fail" -ForegroundColor Red }
+if (Test-CommandExitZero -FilePath "$AndroidHome\platform-tools\adb.exe" -ArgumentList '--version') { Write-Host "ADB: Pass" -ForegroundColor Green } else { Write-Host "ADB: Fail" -ForegroundColor Red }
+if (Test-CommandExitZero -FilePath 'npx' -ArgumentList 'expo --version') { Write-Host "Expo: Pass" -ForegroundColor Green } else { Write-Host "Expo: Fail" -ForegroundColor Red }
+if (Test-CommandExitZero -FilePath 'cmd' -ArgumentList '/c .\apps\mobile\android\gradlew.bat --version') { Write-Host "Gradle: Pass" -ForegroundColor Green } else { Write-Host "Gradle: Fail" -ForegroundColor Red }
+
 
 # Stage 5: Persist
 Write-Banner "Persist" $CurrentStage $Stages; $CurrentStage++
