@@ -68,14 +68,22 @@ if (Test-Path $SdkMgr) {
     Write-Host "`"$SdkMgr`" `"platform-tools`" `"build-tools;35.0.0`" `"platforms;android-35`" `"ndk;26.1.10909125`""
     Read-Host "Run these manually or press Enter to continue"
 } else {
-    Write-Host "sdkmanager not found at $SdkMgr. Verify SDK install." -ForegroundColor Red
+    Write-Host "sdkmanager not found at $SdkMgr." -ForegroundColor Red
+    Write-Host "Download command line tools from:"
+    Write-Host "https://developer.android.com/studio#command-line-tools-only"
+    Write-Host "Extract zip into folder named `latest` under: $AndroidHome\cmdline-tools"
+    Start-Process "https://developer.android.com/studio#command-line-tools-only"
+    Read-Host "Press Enter after extraction"
+    if (-not (Test-Path $SdkMgr)) {
+        Write-Host "Still missing. Check manual install." -ForegroundColor Red
+    }
 }
 
 # Stage 4: Verify
 Write-Banner "Verify" $CurrentStage $Stages; $CurrentStage++
 $VerifyList = @(
-    @{ Cmd = "java -version"; Msg = "Java" },
-    @{ Cmd = "javac -version"; Msg = "Javac" },
+    @{ Cmd = "`"$JavaHome\bin\java.exe`" -version"; Msg = "Java" },
+    @{ Cmd = "`"$JavaHome\bin\javac.exe`" -version"; Msg = "Javac" },
     @{ Cmd = "$AndroidHome\platform-tools\adb.exe --version"; Msg = "ADB" },
     @{ Cmd = "npx expo --version"; Msg = "Expo" },
     @{ Cmd = ".\apps\mobile\android\gradlew.bat --version"; Msg = "Gradle" }
