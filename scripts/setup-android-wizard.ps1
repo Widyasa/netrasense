@@ -133,6 +133,16 @@ foreach ($P in $NewPaths) {
 [Environment]::SetEnvironmentVariable('Path', $Path, 'User')
 Write-Host "Environment variables set. Restart terminal to apply." -ForegroundColor Yellow
 
+# Update gradle.properties
+$GradleProps = "apps/mobile/android/gradle.properties"
+$EscapedJavaHome = $JavaHome -replace '\\', '\\\\'
+if (Test-Path $GradleProps) {
+    $Content = Get-Content $GradleProps
+    $NewContent = $Content | Where-Object { $_ -notmatch '^org.gradle.java.home=' }
+    $NewContent += "org.gradle.java.home=$EscapedJavaHome"
+    $NewContent | Out-File $GradleProps -Encoding utf8
+}
+
 # Stage 6: Build APK
 Write-Banner "Build APK" $CurrentStage $Stages; $CurrentStage++
 if (Read-YesNo "Build release APK now? (this may take several minutes)") {
