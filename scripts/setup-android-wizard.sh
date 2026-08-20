@@ -213,8 +213,8 @@ else
 fi
 
 stage "Install SDK Components"
-SDK_MGR="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager.bat"
-SDK_MGR="$(echo "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager.bat" | sed 's|/|\\|g')"
+SDK_MGR="$ANDROID_HOME/cmdline-tools/bin/sdkmanager.bat"
+SDK_MGR="$(echo "$ANDROID_HOME/cmdline-tools/bin/sdkmanager.bat" | sed 's|/|\\|g')"
 say "\"$SDK_MGR\" --licenses"
 say "\"$SDK_MGR\" \"platform-tools\" \"build-tools;35.0.0\" \"platforms;android-35\" \"ndk;26.1.10909125\""
 pause
@@ -237,7 +237,7 @@ cat << PS > scripts/set-android-env.ps1
 [Environment]::SetEnvironmentVariable('JAVA_HOME', '$JAVA_HOME', 'User')
 [Environment]::SetEnvironmentVariable('ANDROID_HOME', '$ANDROID_HOME', 'User')
 \$p = [Environment]::GetEnvironmentVariable('Path', 'User')
-\$n = "$ANDROID_HOME\platform-tools;$ANDROID_HOME\cmdline-tools\latest\bin;$JAVA_HOME\bin"
+\$n = "$ANDROID_HOME\platform-tools;$ANDROID_HOME\cmdline-tools\bin;$JAVA_HOME\bin"
 [Environment]::SetEnvironmentVariable('Path', "\$p;\$n", 'User')
 PS
 warn "Run scripts/set-android-env.ps1 as Administrator, then restart terminal."
