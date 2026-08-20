@@ -1,0 +1,30 @@
+// Root Gradle config. This repo checks in only the Gradle files needed to
+// pin ARCore; run `npx expo prebuild` to generate the rest of the native
+// Android project before building.
+buildscript {
+    ext {
+        buildToolsVersion = findProperty("android.buildToolsVersion") ?: "35.0.0"
+        minSdkVersion = Integer.parseInt(findProperty("android.minSdkVersion") ?: "24")
+        compileSdkVersion = Integer.parseInt(findProperty("android.compileSdkVersion") ?: "35")
+        targetSdkVersion = Integer.parseInt(findProperty("android.targetSdkVersion") ?: "34")
+        kotlinVersion = findProperty("android.kotlinVersion") ?: "1.9.25"
+    }
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath("com.android.tools.build:gradle")
+        classpath("com.facebook.react:react-native-gradle-plugin")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        // Google's Maven repo, required for the ARCore SDK.
+        maven { url "https://maven.google.com" }
+    }
+}

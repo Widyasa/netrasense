@@ -1,0 +1,39 @@
+{
+  "expo": {
+    "name": "NetraSense Mobile",
+    "slug": "netrasense-mobile",
+    "version": "0.0.1",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": false,
+    "splash": {
+      "backgroundColor": "#FBFAF7"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "android": {
+      "package": "com.netrasense.mobile",
+      "permissions": ["CAMERA", "RECORD_AUDIO"],
+      "adaptiveIcon": {
+        "backgroundColor": "#FBFAF7"
+      },
+      "meta-data": [
+        {
+          "name": "com.google.ar.core",
+          "value": "required"
+        }
+      ]
+    },
+    "plugins": [
+      [
+        "react-native-vision-camera",
+        {
+          "cameraPermissionText": "NetraSense needs camera access to describe your surroundings.",
+          "enableFrameProcessors": true
+        }
+      ]
+    ],
+    "extra": {
+      "geminiApiKeyEnvVar": "GEMINI_API_KEY"
+    }
+  }
+}

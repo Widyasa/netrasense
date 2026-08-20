@@ -8,8 +8,8 @@
 | Nama jaringan | Proof-of-Path Network |
 | Ringkasan satu kalimat | Asisten navigasi spasial berbasis AI dan AR untuk penyandang tunanetra dan low vision, ditopang jaringan peta aksesibilitas terdesentralisasi. |
 | Pemilik dokumen | Product & Pitch Lead, Tim NetraSense |
-| Status | Draft untuk implementasi — siap dieksekusi tahap MVP |
-| Platform target | Android (APK) sebagai platform utama · Web dApp sebagai pendamping |
+| Status | Draft untuk implementasi — R0 sedang dieksekusi sebagai aplikasi React Native Android |
+| Platform target | React Native Android app (Expo development build) sebagai platform utama R0 · Web dApp Next.js sebagai pendamping/fallback |
 | Wilayah pilot | Denpasar, Bali — Indonesia |
 | Dokumen terkait | Proposal Proyek v2.0 · Design Brief & Design System v2.0 · Konsep Desain UI v2.0 (HTML interaktif) |
 
@@ -149,9 +149,9 @@ Metrik ini tidak dikejar untuk naik — metrik ini dijaga agar tidak rusak. Jika
 
 ### 2.3 Definisi sukses MVP hackathon
 
-MVP dinyatakan berhasil jika satu lingkaran penuh berjalan langsung di depan penonton, tanpa video:
+MVP dinyatakan berhasil jika satu lingkaran penuh berjalan langsung di depan penonton, tanpa video, di atas **aplikasi React Native Android (Expo development build)** yang berjalan pada perangkat demo Samsung S21 FE 5G — Web dApp Next.js tersedia sebagai jalur pendamping/fallback bila demo mobile tidak dapat dijalankan:
 
-**berjalan → deteksi bahaya nyata → peringatan audio + haptic → laporan terkirim → validasi → imbalan tercatat on-chain di testnet.**
+**berjalan → deteksi bahaya nyata (Gemini Vision API + ARCore Depth) → peringatan audio + haptic → laporan terkirim → validasi → imbalan tercatat on-chain di testnet.**
 
 ---
 
@@ -419,16 +419,16 @@ Prioritas memakai MoSCoW: **M** = Must, **S** = Should, **C** = Could, **W** = W
 
 ## 8. Spesifikasi fungsional — Lapisan SENSE
 
-### F-01 · Deteksi rintangan real-time on-device
+### F-01 · Deteksi rintangan real-time
 
 | | |
 |---|---|
 | **Prioritas** | Must (R0) |
 | **Layar** | P-08, P-09 |
 | **Persona** | P1, P2 |
-| **Ketergantungan** | Izin kamera (F-18), model deteksi terkuantisasi |
+| **Ketergantungan** | Izin kamera (F-18), Google Gemini Vision API (cloud, R0) |
 
-**Deskripsi.** Aplikasi memproses aliran kamera dan data kedalaman secara terus-menerus di perangkat, mengidentifikasi objek yang berada di jalur pejalan kaki pengguna dalam radius 0,5–8 meter, dan meneruskan hasilnya ke pengklasifikasi bahaya (F-02).
+**Deskripsi.** Aplikasi memproses aliran kamera secara terus-menerus, mengidentifikasi objek yang berada di jalur pejalan kaki pengguna dalam radius 0,5–8 meter, dan meneruskan hasilnya ke pengklasifikasi bahaya (F-02). **R0 (aplikasi React Native Android):** frame kamera (`react-native-vision-camera`) dikirim sebagai JPEG/Base64 ke **Google Gemini Vision API** (cloud) untuk deteksi objek/bahaya, bukan model TFLite on-device; jarak digabungkan dari **ARCore Depth API** bila tersedia. **R1+ (roadmap on-device):** evaluasi model terkuantisasi on-device (mis. TFLite/ONNX) untuk mengurangi ketergantungan latensi jaringan — lihat 17.2.
 
 **User story.** *Sebagai* Ratna yang berjalan di trotoar, *saya ingin* sistem melihat rintangan di depan saya secara terus-menerus, *supaya* saya tahu ada sesuatu sebelum tongkat atau kepala saya menabraknya.
 
@@ -438,7 +438,7 @@ Prioritas memakai MoSCoW: **M** = Must, **S** = Should, **C** = Could, **W** = W
 |---|---|---|---|
 | AC-01.1 | Izin kamera diberikan dan navigasi aktif | Pengguna berjalan dengan ponsel menghadap depan | Sistem menghasilkan hasil deteksi minimal 12 frame per detik pada perangkat acuan |
 | AC-01.2 | Objek berada pada jarak 0,5–8 m dalam koridor jalur selebar 1,2 m | Objek masuk bidang pandang | Objek terdeteksi dan diberi label kelas, jarak, arah, serta skor keyakinan |
-| AC-01.3 | Perangkat tidak memiliki sensor kedalaman | Navigasi dimulai | Sistem beralih ke estimasi kedalaman monokular tanpa memberi tahu pengguna, dan ambang keyakinan dinaikkan 15% |
+| AC-01.3 | Perangkat tidak memiliki dukungan ARCore Depth API atau sedang tanpa koneksi internet | Navigasi dimulai | Sistem beralih ke heuristik bounding-box + tinggi objek asumsian untuk jarak, dan ke **mode demo** dengan respons Gemini yang di-cache untuk deteksi bila API tidak terjangkau, tanpa memberi tahu pengguna secara mengganggu |
 | AC-01.4 | Aplikasi berjalan di latar belakang dengan layar mati | Pengguna terus berjalan | Deteksi tetap berjalan lewat foreground service, dan indikator kamera aktif tetap terlihat dari luar |
 | AC-01.5 | Kamera tertutup, gelap total, atau lensa kotor | Kondisi berlangsung >3 detik | Sistem mengumumkan "Saya tidak bisa melihat" satu kali, lalu berhenti memberi peringatan palsu |
 
@@ -449,7 +449,7 @@ Prioritas memakai MoSCoW: **M** = Must, **S** = Should, **C** = Could, **W** = W
 - **Objek bergerak cepat (motor):** diberi prioritas kelas Kritis meski jaraknya masih >3 m.
 - **Kerumunan padat:** sistem tidak menyebutkan setiap orang; agregasi menjadi satu pesan "banyak orang di depan, jalur menyempit".
 
-**Metrik.** Recall kelas Kritis ≥99%, presisi keseluruhan ≥85%, latensi inferensi p95 ≤80 ms.
+**Metrik.** Recall kelas Kritis ≥99%, presisi keseluruhan ≥85%, latensi deteksi ujung-ke-ujung (kirim frame → hasil Gemini) p95 ≤80 ms pada koneksi acuan; mode demo offline dipakai sebagai fallback saat latensi/konektivitas tidak memenuhi target.
 
 ---
 
@@ -511,7 +511,7 @@ Prioritas memakai MoSCoW: **M** = Must, **S** = Should, **C** = Could, **W** = W
 |---|---|
 | **Prioritas** | Must (R0) |
 
-**Deskripsi.** Jarak disampaikan dalam **langkah**, bukan meter, untuk jarak <10 m. Arah disampaikan relatif terhadap badan pengguna: depan, depan-kiri, kiri, kanan, depan-kanan.
+**Deskripsi.** Jarak disampaikan dalam **langkah**, bukan meter, untuk jarak <10 m. Arah disampaikan relatif terhadap badan pengguna: depan, depan-kiri, kiri, kanan, depan-kanan. **Sumber jarak (R0):** primer **ARCore Depth API** pada perangkat demo (Samsung S21 FE 5G); **fallback** heuristik bounding-box + tinggi objek asumsian (orang ~1,7 m, tiang ~2,5 m, kendaraan ~1,5 m, dahan ~0,3 m) saat Depth API tidak tersedia atau perangkat tidak mendukungnya.
 
 **Kriteria penerimaan.**
 
@@ -521,6 +521,7 @@ Prioritas memakai MoSCoW: **M** = Must, **S** = Should, **C** = Could, **W** = W
 | AC-04.2 | Objek berjarak <10 m | Peringatan diumumkan | Jarak disebut dalam langkah, dibulatkan ke bilangan bulat |
 | AC-04.3 | Objek berjarak ≥10 m | Peringatan diumumkan | Jarak disebut dalam meter, dibulatkan ke kelipatan 5 |
 | AC-04.4 | Arah mata angin diminta pengguna lewat pengaturan | Panduan diberikan | Sistem menambahkan arah mata angin **setelah** arah relatif badan, tidak menggantikannya |
+| AC-04.5 | ARCore Depth API tidak tersedia di perangkat atau gagal inisialisasi | Navigasi dimulai | Sistem beralih ke heuristik bounding-box + tinggi objek asumsian tanpa menghentikan navigasi, dan menandai estimasi sebagai kurang presisi secara internal |
 
 ---
 
@@ -1187,9 +1188,8 @@ Dompet kripto konvensional mengharuskan pengguna menyimpan 12–24 kata rahasia.
 │  APLIKASI MOBILE (Android)                                          │
 │  ┌────────────┐ ┌────────────┐ ┌────────────┐ ┌──────────────────┐  │
 │  │ UI Layer   │ │ Perception │ │ Guidance   │ │ Contribution      │  │
-│  │ React      │ │ ARCore +   │ │ Route +    │ │ Recorder + Queue  │  │
-│  │ Native     │ │ TFLite     │ │ Spatial    │ │ + Signer          │  │
-│  │ + a11y     │ │            │ │ Audio      │ │                   │  │
+│  │ Native     │ │ Gemini +   │ │ Spatial    │ │ + Signer          │  │
+│  │ + a11y     │ │ ARCore     │ │ Audio      │ │                   │  │
 │  └────────────┘ └────────────┘ └────────────┘ └──────────────────┘  │
 │  ┌───────────────────────────┐ └────────────┘ ┌──────────────────┐  │
 │  │ Local Store (SQLite +     │                │ Embedded Wallet   │  │
@@ -1226,14 +1226,14 @@ Dompet kripto konvensional mengharuskan pengguna menyimpan 12–24 kata rahasia.
 ### 17.2 Tech stack — aplikasi mobile
 
 > **Revisi vs draf awal:** tim memutuskan pindah dari Flutter ke **React Native** demi kecepatan development selama hackathon, karena tim lebih familiar dengan ekosistem RN/JS. Trade-off utamanya ada pada dua titik: (1) ARCore Depth API tidak punya plugin RN yang matang, kemungkinan perlu native module Kotlin custom; (2) API aksesibilitas RN (`AccessibilityInfo`) secara historis kurang matang dibanding Flutter `Semantics` untuk kontrol granular. Disarankan spike kecil di awal R0 untuk validasi kedua titik ini sebelum lanjut ke pipeline penuh.
+>
+> **Revisi kedua (R0):** deteksi objek/bahaya R0 memakai **Google Gemini Vision API (cloud)**, bukan model TFLite on-device, untuk mempercepat iterasi selama hackathon tanpa perlu melatih dan mengkuantisasi model sendiri. Konsekuensinya: fitur bergantung pada latensi dan ketersediaan internet (lihat bagian 29), dan aplikasi memerlukan `GEMINI_API_KEY`. Aplikasi menyediakan **mode demo** dengan respons Gemini yang di-cache untuk skenario offline/tanpa API key. Estimasi jarak R0 memakai **ARCore Depth API** di perangkat demo (Samsung S21 FE 5G) dengan fallback heuristik bounding-box + tinggi objek asumsian. Evaluasi model on-device (TFLite/ONNX) tetap menjadi opsi roadmap R1+ untuk mengurangi ketergantungan jaringan.
 
 | Lapisan | Pilihan utama | Alternatif | Alasan pemilihan |
 |---|---|---|---|
 | Bahasa & framework | **React Native 0.7x (New Architecture / JSI)** | Kotlin native, Flutter | Tim lebih cepat development di RN; New Architecture (JSI, bukan bridge lama) menekan overhead kanal platform. Kotlin native dipertimbangkan ulang jika profiling menunjukkan overhead >15 ms pada guardrail latensi 2.2 |
-| Kamera & AR | **ARCore Depth API** via native module Kotlin custom + `react-native-vision-camera` | Plugin RN-ARCore komunitas (terbatas), MediaPipe | Estimasi kedalaman tanpa LiDAR; belum ada binding RN siap-pakai yang matang, jadi expose depth data lewat native module sendiri lalu bridge ke JS via JSI |
-| Inferensi on-device | **`react-native-fast-tflite`** (TensorFlow Lite via JSI) dengan delegasi NNAPI/GPU | ONNX Runtime Mobile React Native, native module custom | Binding JSI langsung ke buffer native, menghindari overhead serialization bridge lama; delegasi NNAPI memberi akselerasi NPU pada perangkat target |
-| Model deteksi | **YOLO-nano / MobileNet-SSD terkuantisasi INT8**, dilatih ulang pada dataset trotoar Indonesia | EfficientDet-Lite | Trade-off terbaik antara latensi dan recall pada perangkat kelas menengah (tidak berubah dari pilihan model, hanya runtime inferensinya) |
-| Estimasi kedalaman fallback | **MiDaS-small terkuantisasi** | Depth Anything (versi kecil) | Untuk perangkat tanpa dukungan Depth API |
+| AI object/hazard detection | **Google Gemini Vision API** (cloud) via `axios`/`fetch`, frame dari `react-native-vision-camera` dikirim sebagai JPEG/Base64 | `react-native-fast-tflite` on-device (roadmap R1+), ONNX Runtime Mobile RN | R0 memprioritaskan kecepatan implementasi dan kualitas deteksi tanpa melatih model sendiri; trade-off: latensi jaringan dan biaya API — lihat risiko R-11..R-14 di bagian 29 |
+| Estimasi jarak/kedalaman | **ARCore Depth API** via native module Kotlin custom, pada perangkat demo Samsung S21 FE 5G | Heuristik bounding-box + tinggi objek asumsian (orang ~1,7 m, tiang ~2,5 m, kendaraan ~1,5 m, dahan ~0,3 m) | Depth API akurat pada perangkat yang mendukungnya; heuristik dipakai sebagai fallback saat Depth API tidak tersedia |
 | Text-to-Speech | **Android TTS on-device** (`react-native-tts`) | Piper TTS terpaket | Latensi rendah, berfungsi offline, mendukung kecepatan sampai 3× |
 | Speech-to-Text | **Android SpeechRecognizer** on-device (`@react-native-voice/voice`) | Whisper-tiny terpaket | Perintah suara harus tetap berfungsi tanpa sinyal |
 | Audio spasial | **Oboe / AAudio** via native module custom + HRTF panning | `react-native-track-player` + panner sederhana | Latensi audio rendah wajib untuk peringatan keselamatan; sama seperti di Flutter, tetap butuh bridge native ke Oboe |
@@ -1947,12 +1947,16 @@ tag rilis
 | R-02 | Kelelahan peringatan → aplikasi dimatikan | **Tinggi** | Prinsip keheningan default; guardrail ≤2 peringatan palsu/perjalanan; sensitivitas dapat diatur | Product |
 | R-03 | Cold start data — peta kosong | **Tinggi** | Lapisan SENSE bekerja penuh tanpa data peta; peta hanya meningkatkan kualitas rute | Product |
 | R-04 | Serangan sybil pada imbalan | Sedang | Enam lapis pertahanan (12.4); imbalan awal kecil; reputasi tidak dapat dipindahtangankan | Web3 |
-| R-05 | Reaksi negatif terhadap kamera aktif di ruang publik | Sedang | Pemrosesan on-device, blur otomatis, indikator terlihat, komunikasi proaktif bersama organisasi disabilitas | Product |
+| R-05 | Reaksi negatif terhadap kamera aktif di ruang publik | Sedang | Blur otomatis, indikator terlihat, komunikasi proaktif bersama organisasi disabilitas; frame dikirim ke Gemini Vision API tidak disimpan permanen di sisi server AI | Product |
 | R-06 | Ketidakpastian regulasi aset kripto | Sedang | Jalur mundur poin non-transferabel pada R0–R1; kajian hukum sebelum penerbitan | Product |
 | R-07 | Penolakan Google Play karena kebijakan kripto | Sedang | Pemisahan akumulasi (aplikasi) dan klaim (web); tidak ada fungsi perdagangan di aplikasi | Web3 |
 | R-08 | Baterai habis sebelum perjalanan selesai | Sedang | Manajemen daya adaptif (F-05); guardrail ≤18%/jam | Mobile |
 | R-09 | Web3 terbaca sebagai tempelan oleh juri | Sedang | Bagian 12.2 dan glosarium 5; latihan menjawab dalam 30 detik | Product |
 | R-10 | Tim tidak punya akses ke penguji tunanetra | **Tinggi** | Permintaan nomor 1 dalam proposal; jalin kontak Pertuni sebelum menulis kode berikutnya | Product |
+| R-11 | Latensi API Gemini Vision / ketergantungan koneksi internet | **Tinggi** | Mode demo dengan respons Gemini yang di-cache; antrean lokal dan retry saat koneksi kembali; guardrail latensi p95 dipantau khusus untuk jalur cloud | AI/CV |
+| R-12 | Pengelolaan `GEMINI_API_KEY` (kebocoran, kuota habis, biaya) | Sedang | Kunci disimpan lewat env/secret store, tidak dibundel di APK; kuota dan penggunaan dipantau; mode demo tersedia bila kunci tidak ada/habis kuota | Mobile |
+| R-13 | Setup native ARCore Depth API (kompatibilitas perangkat, native module Kotlin custom) | Sedang | Spike ARCore di awal R0; fallback heuristik bounding-box + tinggi objek asumsian bila Depth API gagal inisialisasi atau perangkat tidak didukung | Mobile |
+| R-14 | Demo panggung gagal karena API/jaringan tidak stabil | **Tinggi** | Mode demo offline dengan respons Gemini pra-rekam disiapkan sebagai jalur cadangan wajib sebelum presentasi; uji jaringan venue H-1 | Product |
 
 > **Risiko yang tidak dapat dimitigasi dengan teknologi:** produk ini akan gagal jika dirancang tanpa penyandang tunanetra di dalam proses pengambilan keputusan. Rekrut penguji sebelum baris kode berikutnya ditulis, bukan setelah prototipe selesai.
 

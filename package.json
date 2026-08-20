@@ -10,7 +10,10 @@
     "deploy:contracts": "pnpm --filter contracts deploy",
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",
-    "format": "pnpm -r format"
+    "format": "pnpm -r format",
+    "mobile:dev": "pnpm --filter @netrasense/mobile dev",
+    "mobile:android": "pnpm --filter @netrasense/mobile android",
+    "mobile:build": "pnpm --filter @netrasense/mobile build"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
