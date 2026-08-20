@@ -1,13 +1,3 @@
-import { NativeModules } from "react-native";
+import { getDepthAtPoint as nativeGetDepthAtPoint, isDepthAvailable } from "../../modules/arcore-depth";
 
-interface ARCoreNativeModule {
-  getDepthAtPoint(x: number, y: number): Promise<number | null>;
-}
-
-const ARCoreModule: ARCoreNativeModule = NativeModules.ARCoreModule ?? {
-  getDepthAtPoint: async () => null,
-};
-
-export async function getDepthAtPoint(x: number, y: number): Promise<number | null> {
-  return ARCoreModule.getDepthAtPoint(x, y);
-}
+export { nativeGetDepthAtPoint as getDepthAtPoint, isDepthAvailable };

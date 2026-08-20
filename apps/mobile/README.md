@@ -40,12 +40,26 @@ Android React Native app (Expo development build) for NetraSense.
   `arm64-v8a` and `armeabi-v7a` for ARCore compatibility.
 - Camera + frame processing uses `react-native-vision-camera` with
   `react-native-worklets-core`.
-- ARCore Depth is wired via `src/native/ARCoreModule.ts`, a JS-only stub
-  (`getDepthAtPoint` resolves to `null` when `NativeModules.ARCoreModule`
-  is absent). Real depth requires a Kotlin/Java native module implementing
-  `getDepthAtPoint(x, y)` against the ARCore Depth API; until that lands,
-  `useHazardPipeline` falls back to the bounding-box distance heuristic in
-  `src/engine/distance.ts`.
+- ARCore Depth is wired via `apps/mobile/modules/arcore-depth/`, a local Expo
+  module (autolinked by Expo SDK 52 in dev builds) with a Kotlin
+  implementation of `getDepthAtPoint(x, y)` (normalized 0..1 coordinates) and
+  `isDepthAvailable()` against `com.google.ar:core:1.46.0`.
+  `src/native/ARCoreModule.ts` re-exports the module's TS wrapper, and
+  `src/engine/distanceAsync.ts#estimateDistanceAsync` samples ARCore at the
+  bounding-box center before falling back to the bounding-box heuristic in
+  `src/engine/distance.ts`. `useHazardPipeline` resolves distance
+  asynchronously per detection (keyed by detection id) and classifies a
+  hazard as `waspada` while the sample is in flight.
+  - ARCore needs its own `Session` bound to the camera, which can conflict
+    with the vision-camera preview session already driving the frame
+    processor; the native module treats `CameraNotAvailableException` and
+    any session-start failure as "depth unavailable" and resolves `null`
+    rather than throwing, so the heuristic fallback always applies.
+  - `isDepthModeSupported` / `ArCoreApk.checkAvailability` gate depth on
+    device support (e.g. Samsung S21 FE 5G supports ARCore Depth).
+  - Native build isn't exercised by `tsc`; verify on-device with
+    `npx expo run:android` after `npx expo prebuild` picks up the module
+    from `modules/arcore-depth/`.
 
 ## Environment Variables
 `EXPO_PUBLIC_API_URL` - Base URL for the backend API. Default: `http://localhost:3000/api`.
