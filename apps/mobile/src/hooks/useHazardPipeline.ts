@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { classifyHazard, estimateDistanceAsync, type HazardLevel } from "../engine";
+import { isDepthAvailable } from "../native/ARCoreModule";
 import type { HazardDetection } from "../types/hazard";
 import { useCameraHazards, type UseCameraHazardsResult } from "./useCameraHazards";
 import { useDemoHazards } from "./useDemoHazards";
@@ -14,6 +15,8 @@ export interface UseHazardPipelineResult
   hazards: ClassifiedHazard[];
   isBusy: boolean;
   error: string | null;
+  depthAvailable: boolean;
+  pendingCount: number;
 }
 
 const LEVEL_SEVERITY: Record<HazardLevel, number> = {
@@ -28,20 +31,41 @@ export function useHazardPipeline(enabled: boolean, demo = false): UseHazardPipe
   const demoResult = useDemoHazards(enabled && demo);
   const { detections, isDetecting, ...rest } = demo ? demoResult : cameraResult;
 
+  const [depthAvailable, setDepthAvailable] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    isDepthAvailable().then((available) => {
+      if (!cancelled) setDepthAvailable(available);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // Distances resolve asynchronously (ARCore Depth API sample, falling back
   // to the bounding-box heuristic). Keyed by detection id so in-flight
   // detections keep their last-known distance across renders.
   const [resolvedDistances, setResolvedDistances] = useState<Record<string, number | null>>({});
+  const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     let cancelled = false;
 
     detections.forEach((detection) => {
-      if (detection.id in resolvedDistances) return;
+      if (detection.id in resolvedDistances || pendingIds.has(detection.id)) return;
+
+      setPendingIds((previous) => new Set(previous).add(detection.id));
 
       estimateDistanceAsync(detection).then((distanceMeters) => {
         if (cancelled) return;
         setResolvedDistances((previous) => ({ ...previous, [detection.id]: distanceMeters }));
+        setPendingIds((previous) => {
+          if (!previous.has(detection.id)) return previous;
+          const next = new Set(previous);
+          next.delete(detection.id);
+          return next;
+        });
       });
     });
 
@@ -58,7 +82,7 @@ export function useHazardPipeline(enabled: boolean, demo = false): UseHazardPipe
     return () => {
       cancelled = true;
     };
-  }, [detections, resolvedDistances]);
+  }, [detections, resolvedDistances, pendingIds]);
 
   const hazards = useMemo<ClassifiedHazard[]>(() => {
     const classified = detections.map((detection): ClassifiedHazard => {
@@ -87,5 +111,12 @@ export function useHazardPipeline(enabled: boolean, demo = false): UseHazardPipe
     });
   }, [detections, resolvedDistances]);
 
-  return { ...rest, hazards, isBusy: isDetecting, error: rest.error };
+  return {
+    ...rest,
+    hazards,
+    isBusy: isDetecting,
+    error: rest.error,
+    depthAvailable,
+    pendingCount: pendingIds.size,
+  };
 }

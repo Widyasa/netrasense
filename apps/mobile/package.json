@@ -10,7 +10,8 @@
     "prebuild": "expo prebuild",
     "build": "expo prebuild --platform android",
     "apk": "expo run:android --variant release",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "ios": "expo run:ios"
   },
   "dependencies": {
     "@netrasense/shared": "workspace:*",

@@ -2,14 +2,21 @@ import React from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { NavigationScreenProps } from "./index";
 
-export function NavigationScreen({ hazards, onReportPress }: NavigationScreenProps) {
+export function NavigationScreen({ hazards, onReportPress, fps, depthAvailable }: NavigationScreenProps) {
   const topHazards = hazards.slice(0, 2);
+  const showStatus = fps !== undefined || depthAvailable !== undefined;
 
   return (
     <View style={styles.container}>
       <View style={styles.statusBar}>
         <Text style={styles.statusText}>Navigating home</Text>
         <Text style={styles.instructionText}>Next: straight</Text>
+        {showStatus && (
+          <Text style={styles.debugText}>
+            {depthAvailable !== undefined ? `ARCore: ${depthAvailable ? "ON" : "OFF"}` : ""}
+            {fps !== undefined ? `  FPS: ${fps.toFixed(1)}` : ""}
+          </Text>
+        )}
       </View>
 
       <View style={styles.hazardList}>
@@ -36,6 +43,7 @@ const styles = StyleSheet.create({
   statusBar: { position: "absolute", top: 40, left: 20, right: 20 },
   statusText: { color: "white", fontSize: 16 },
   instructionText: { color: "white", fontSize: 24, fontWeight: "bold" },
+  debugText: { color: "#9be89b", fontSize: 12, marginTop: 4 },
   hazardList: { position: "absolute", top: 120, left: 20 },
   hazardItem: { color: "yellow", fontSize: 14 },
   reportButton: {

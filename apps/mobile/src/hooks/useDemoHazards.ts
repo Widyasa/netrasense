@@ -54,5 +54,7 @@ export function useDemoHazards(enabled: boolean): UseCameraHazardsResult {
     isDetecting: false,
     error: null,
     lastFrameAt,
+    fps: 0.5,
+    targetFps: 1,
   };
 }

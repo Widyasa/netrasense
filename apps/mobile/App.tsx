@@ -28,6 +28,8 @@ export default function App() {
     hasPermission,
     frameProcessor,
     hazards,
+    fps,
+    depthAvailable,
   } = useHazardPipeline(detectionEnabled, isDemo);
 
   const { submit: reportHazard, isSubmitting, result, error } = useReportFlow();
@@ -80,7 +82,25 @@ export default function App() {
       <NavigationScreen 
         hazards={hazards} 
         onReportPress={() => setReportVisible(true)} 
+        fps={isDemo ? undefined : fps}
+        depthAvailable={isDemo ? undefined : depthAvailable}
       />
+
+      {!isDemo && (
+        <View style={styles.debugBadge} pointerEvents="none">
+          <Text style={styles.debugBadgeText}>ARCore: {depthAvailable ? "ON" : "OFF"}</Text>
+          <Text style={styles.debugBadgeText}>FPS: {fps.toFixed(1)}</Text>
+        </View>
+      )}
+
+      {topHazard && (
+        <View style={styles.hazardBadge} pointerEvents="none">
+          <Text style={styles.hazardBadgeText}>
+            {topHazard.level.toUpperCase()}
+            {topHazard.distanceMeters != null ? ` · ${topHazard.distanceMeters.toFixed(1)}m` : ""}
+          </Text>
+        </View>
+      )}
 
       {isKritis && <HazardAlert hazard={topHazard} />}
 
@@ -123,6 +143,28 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   demoToggleText: { color: "white", fontWeight: "600" },
+  debugBadge: {
+    position: "absolute",
+    top: 48,
+    left: 16,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+    zIndex: 10,
+  },
+  debugBadgeText: { color: "#7CFC7C", fontSize: 12, fontWeight: "600" },
+  hazardBadge: {
+    position: "absolute",
+    bottom: 24,
+    left: 16,
+    backgroundColor: "rgba(0,0,0,0.7)",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    zIndex: 10,
+  },
+  hazardBadgeText: { color: "yellow", fontSize: 13, fontWeight: "700" },
   reportStatus: {
     position: "absolute",
     bottom: 24,
