@@ -151,7 +151,7 @@ if (Read-YesNo "Build release APK now? (this may take several minutes)") {
     }
     $Build = Start-Process -NoNewWindow -Wait -WorkingDirectory 'apps/mobile' -FilePath 'cmd' -ArgumentList '/c','npm','run','apk' -PassThru
     if ($Build.ExitCode -eq 0) {
-        Write-Host "APK output: $PWD\apps\mobile\android\app\build\outputs\apk\release\app-release.apk" -ForegroundColor Green
+        Write-Host "APK output: $PWD\apps\mobile\android\app\build\outputs\apk\release\netrasense.apk" -ForegroundColor Green
     } else {
         Write-Host "Build failed with exit code $($Build.ExitCode)." -ForegroundColor Red
     }
