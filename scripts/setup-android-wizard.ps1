@@ -27,9 +27,8 @@ $JavaHome = [System.Environment]::GetEnvironmentVariable('JAVA_HOME', 'User')
 if (-not $JavaHome) {
     try { $JavaHome = (Get-Command javac).Path | Split-Path | Split-Path } catch { $JavaHome = "" }
 }
-
-if (-not $JavaHome -or -not (Test-Path "$JavaHome/bin/javac.exe")) {
-    $DefaultJdk = "C:\Program Files\Eclipse Adoptium\jdk-17.0.20+8-hotspot"
+if (-not $JavaHome -or -not (Test-Path "$JavaHome\bin\javac.exe")) {
+    $DefaultJdk = "C:\Program Files\Eclipse Adoptium\jdk-17.0.20.8-hotspot"
     $TemurinDir = "C:\Program Files\Eclipse Adoptium"
     if (Test-Path $TemurinDir) {
         $Found = Get-ChildItem -Path $TemurinDir -Filter "jdk-17.*" | Sort-Object Name -Descending
@@ -38,8 +37,11 @@ if (-not $JavaHome -or -not (Test-Path "$JavaHome/bin/javac.exe")) {
     Write-Host "JDK 17 not found."
     Start-Process "https://adoptium.net/?variant=openjdk17&jvmVariant=hotspot"
     $JavaHome = Read-Default "Enter path to JDK 17" $DefaultJdk
-}
+    if (-not (Test-Path "$JavaHome\bin\javac.exe")) {
+        Write-Host "javac.exe not found at $JavaHome. Please check the JDK path." -ForegroundColor Red
+    }
 Write-Host "Using JAVA_HOME: $JavaHome"
+}
 
 # Stage 2: Android SDK
 Write-Banner "Android SDK" $CurrentStage $Stages; $CurrentStage++
@@ -54,20 +56,26 @@ if (-not $AndroidHome -or -not (Test-Path "$AndroidHome/platform-tools/adb.exe")
     $DefaultSdk = "$env:LOCALAPPDATA\Android\Sdk"
     $AndroidHome = Read-Default "Enter path to Android SDK" $DefaultSdk
 }
+$CmdlineTools = Join-Path $AndroidHome "cmdline-tools"
+$FoundMgr = Get-ChildItem -Path $CmdlineTools -Filter "sdkmanager.bat" -Recurse | Select-Object -First 1
+if ($FoundMgr) {
+    $SdkMgr = $FoundMgr.FullName
+} else {
+    $SdkMgr = Join-Path $AndroidHome "cmdline-tools\latest\bin\sdkmanager.bat"
+}
 Write-Host "Using ANDROID_HOME: $AndroidHome"
 
 # Write Env
 @"
-`$env:JAVA_HOME = '$JavaHome'
-`$env:ANDROID_HOME = '$AndroidHome'
-`$env:PATH += ';$JavaHome\bin'
-`$env:PATH += ';$AndroidHome\platform-tools'
-`$env:PATH += ';$AndroidHome\cmdline-tools\latest\bin'
+[Environment]::SetEnvironmentVariable('JAVA_HOME', '$JavaHome', 'Process')
+[Environment]::SetEnvironmentVariable('ANDROID_HOME', '$AndroidHome', 'Process')
+\$env:Path += ";$JavaHome\bin"
+\$env:Path += ";$AndroidHome\platform-tools"
+\$env:Path += ";$(Split-Path $SdkMgr)"
 "@ | Out-File $EnvFile
 
 # Stage 3: SDK Components
 Write-Banner "SDK Components" $CurrentStage $Stages; $CurrentStage++
-$SdkMgr = "$AndroidHome\cmdline-tools\latest\bin\sdkmanager.bat"
 if (Test-Path $SdkMgr) {
     Write-Host "Commands to run:"
     Write-Host "`"$SdkMgr`" --licenses"
@@ -95,7 +103,7 @@ $VerifyList = @(
     @{ Cmd = ".\apps\mobile\android\gradlew.bat --version"; Msg = "Gradle" }
 )
 foreach ($Item in $VerifyList) {
-    try { 
+    try {
         Invoke-Expression $Item.Cmd 2>&1 | Out-Null
         Write-Host "$($Item.Msg): Pass" -ForegroundColor Green
     } catch { Write-Host "$($Item.Msg): Fail" -ForegroundColor Red }
@@ -106,7 +114,7 @@ Write-Banner "Persist" $CurrentStage $Stages; $CurrentStage++
 [Environment]::SetEnvironmentVariable('JAVA_HOME', $JavaHome, 'User')
 [Environment]::SetEnvironmentVariable('ANDROID_HOME', $AndroidHome, 'User')
 $Path = [Environment]::GetEnvironmentVariable('Path', 'User')
-$NewPaths = @("$JavaHome\bin", "$AndroidHome\platform-tools", "$AndroidHome\cmdline-tools\latest\bin")
+$NewPaths = @("$JavaHome\bin", "$AndroidHome\platform-tools", (Split-Path $SdkMgr))
 foreach ($P in $NewPaths) {
     if (-not $Path.Contains($P)) { $Path += ";$P" }
 }
