@@ -29,9 +29,15 @@ if (-not $JavaHome) {
 }
 
 if (-not $JavaHome -or -not (Test-Path "$JavaHome/bin/javac.exe")) {
+    $DefaultJdk = "C:\Program Files\Eclipse Adoptium\jdk-17.0.20+8-hotspot"
+    $TemurinDir = "C:\Program Files\Eclipse Adoptium"
+    if (Test-Path $TemurinDir) {
+        $Found = Get-ChildItem -Path $TemurinDir -Filter "jdk-17.*" | Sort-Object Name -Descending
+        if ($Found.Count -gt 0) { $DefaultJdk = $Found[0].FullName }
+    }
     Write-Host "JDK 17 not found."
     Start-Process "https://adoptium.net/?variant=openjdk17&jvmVariant=hotspot"
-    $JavaHome = Read-Default "Enter path to JDK 17" "C:\Program Files\Eclipse Adoptium\jdk-17.0.12+7-hotspot"
+    $JavaHome = Read-Default "Enter path to JDK 17" $DefaultJdk
 }
 Write-Host "Using JAVA_HOME: $JavaHome"
 
