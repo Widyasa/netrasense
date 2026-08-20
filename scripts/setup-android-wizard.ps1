@@ -10,13 +10,19 @@ function Read-Default {
     return $v
 }
 
+function Read-YesNo {
+    param([string]$Prompt)
+    $v = Read-Host "$Prompt [Y/n]"
+    return ($v -eq '' -or $v -match '^[Yy]')
+}
+
 function Write-Banner {
     param([string]$Title, [int]$Stage, [int]$TotalStages)
     Write-Host "`n=== $Title (Stage $Stage of $TotalStages) ===`n" -ForegroundColor Cyan
 }
 
 $EnvFile = "scripts/android-env.ps1"
-$Stages = 5
+$Stages = 6
 $CurrentStage = 1
 
 Write-Host "Android Build Setup Wizard" -ForegroundColor Yellow
@@ -77,10 +83,15 @@ Write-Host "Using ANDROID_HOME: $AndroidHome"
 # Stage 3: SDK Components
 Write-Banner "SDK Components" $CurrentStage $Stages; $CurrentStage++
 if (Test-Path $SdkMgr) {
-    Write-Host "Commands to run:"
-    Write-Host "`"$SdkMgr`" --licenses"
-    Write-Host "`"$SdkMgr`" `"platform-tools`" `"build-tools;35.0.0`" `"platforms;android-35`" `"ndk;26.1.10909125`""
-    Read-Host "Run these manually or press Enter to continue"
+    if (Read-YesNo "Install required SDK components automatically? (requires accepting licenses)") {
+        Start-Process -NoNewWindow -Wait -FilePath $SdkMgr -ArgumentList '--licenses'
+        Start-Process -NoNewWindow -Wait -FilePath $SdkMgr -ArgumentList 'platform-tools','build-tools;35.0.0','platforms;android-35','ndk;26.1.10909125'
+    } else {
+        Write-Host "Commands to run:"
+        Write-Host "`"$SdkMgr`" --licenses"
+        Write-Host "`"$SdkMgr`" `"platform-tools`" `"build-tools;35.0.0`" `"platforms;android-35`" `"ndk;26.1.10909125`""
+        Read-Host "Run these manually or press Enter to continue"
+    }
 } else {
     Write-Host "sdkmanager not found at $SdkMgr." -ForegroundColor Red
     Write-Host "Download command line tools from:"
@@ -121,3 +132,19 @@ foreach ($P in $NewPaths) {
 }
 [Environment]::SetEnvironmentVariable('Path', $Path, 'User')
 Write-Host "Environment variables set. Restart terminal to apply." -ForegroundColor Yellow
+
+# Stage 6: Build APK
+Write-Banner "Build APK" $CurrentStage $Stages; $CurrentStage++
+if (Read-YesNo "Build release APK now? (this may take several minutes)") {
+    if (-not (Test-Path "apps/mobile/android/gradlew.bat")) {
+        Start-Process -NoNewWindow -Wait -WorkingDirectory 'apps/mobile' -FilePath 'cmd' -ArgumentList '/c','npx','expo','prebuild','--platform','android'
+    }
+    $Build = Start-Process -NoNewWindow -Wait -WorkingDirectory 'apps/mobile' -FilePath 'cmd' -ArgumentList '/c','npm','run','apk' -PassThru
+    if ($Build.ExitCode -eq 0) {
+        Write-Host "APK output: $PWD\apps\mobile\android\app\build\outputs\apk\release\app-release.apk" -ForegroundColor Green
+    } else {
+        Write-Host "Build failed with exit code $($Build.ExitCode)." -ForegroundColor Red
+    }
+} else {
+    Write-Host "Skipped. Build later with: cd apps/mobile; npm run apk" -ForegroundColor Yellow
+}

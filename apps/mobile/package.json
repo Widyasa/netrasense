@@ -2,7 +2,7 @@
   "name": "@netrasense/mobile",
   "version": "0.0.1",
   "private": true,
-  "main": "expo/AppEntry",
+  "main": "index.js",
   "scripts": {
     "start": "expo start",
     "dev": "expo start",
