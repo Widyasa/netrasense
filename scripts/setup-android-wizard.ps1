@@ -106,7 +106,7 @@ Write-Banner "Verify" $CurrentStage $Stages; $CurrentStage++
 if (Test-CommandExitZero -FilePath "$JavaHome\bin\java.exe" -ArgumentList '-version') { Write-Host "Java: Pass" -ForegroundColor Green } else { Write-Host "Java: Fail" -ForegroundColor Red }
 if (Test-CommandExitZero -FilePath "$JavaHome\bin\javac.exe" -ArgumentList '-version') { Write-Host "Javac: Pass" -ForegroundColor Green } else { Write-Host "Javac: Fail" -ForegroundColor Red }
 if (Test-CommandExitZero -FilePath "$AndroidHome\platform-tools\adb.exe" -ArgumentList '--version') { Write-Host "ADB: Pass" -ForegroundColor Green } else { Write-Host "ADB: Fail" -ForegroundColor Red }
-if (Test-CommandExitZero -FilePath 'npx' -ArgumentList 'expo --version') { Write-Host "Expo: Pass" -ForegroundColor Green } else { Write-Host "Expo: Fail" -ForegroundColor Red }
+if (Test-CommandExitZero -FilePath 'cmd' -ArgumentList '/c npx expo --version') { Write-Host "Expo: Pass" -ForegroundColor Green } else { Write-Host "Expo: Fail" -ForegroundColor Red }
 if (Test-CommandExitZero -FilePath 'cmd' -ArgumentList '/c .\apps\mobile\android\gradlew.bat --version') { Write-Host "Gradle: Pass" -ForegroundColor Green } else { Write-Host "Gradle: Fail" -ForegroundColor Red }
 
 
