@@ -1,0 +1,18 @@
+diff --git a/android/README.md b/android/README.md
+deleted file mode 100644
+index 6eebb68d9f242a118d634455976c94c3936dd56c..0000000000000000000000000000000000000000
+diff --git a/android/build.gradle b/android/build.gradle
+index b1d9973d0b42e63641ed7d509bda6a238902f7af..a73d4e5fc3fd846a74b878d74a307446945a3d5d 100644
+--- a/android/build.gradle
++++ b/android/build.gradle
+@@ -154,6 +154,7 @@ android {
+   externalNativeBuild {
+     cmake {
+       path "CMakeLists.txt"
++      version "4.1.2"
+     }
+   }
+   packagingOptions {
+diff --git a/ios/README.md b/ios/README.md
+deleted file mode 100644
+index 1c47fe132d3ab5ef1ed73fdc309ce34b91cf4c31..0000000000000000000000000000000000000000
