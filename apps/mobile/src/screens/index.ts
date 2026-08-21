@@ -3,6 +3,9 @@ import { ClassifiedHazard } from "../hooks/useHazardPipeline";
 export interface NavigationScreenProps {
   hazards: ClassifiedHazard[];
   onReportPress: () => void;
+  onClosePress: () => void;
+  isDemo: boolean;
+  onDemoToggle: () => void;
   fps?: number;
   depthAvailable?: boolean;
 }

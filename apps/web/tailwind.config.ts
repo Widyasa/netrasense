@@ -47,6 +47,11 @@ const config: Config = {
           DEFAULT: "#D22B2B",
           deep: "#8F1F1F",
         },
+        dark: {
+          bg: "#0D1420",
+          text: "#F2F5F9",
+          violet: "#B49CFC",
+        },
       },
       fontFamily: {
         sans: ["var(--font-atkinson)", "sans-serif"],
@@ -76,7 +81,7 @@ const config: Config = {
       },
       borderRadius: {
         small: "12px",
-        button: "16px",
+        button: "14px",
         card: "24px",
       },
     },

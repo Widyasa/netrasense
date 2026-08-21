@@ -7,20 +7,14 @@ import { useHazardPipeline } from "./src/hooks/useHazardPipeline";
 import { useReportFlow } from "./src/hooks/useReportFlow";
 import { alertHazard } from "./src/engine";
 import { DEMO_LOCATION } from "./src/demo/sampleData";
-import {
-  ContributorWebViewScreen,
-  NavigationScreen,
-  HazardAlert,
-  ReportSheet,
-} from "./src/screens";
+import { NavigationScreen, HazardAlert, ReportSheet } from "./src/screens";
 
 const DEMO_MODE_DEFAULT = process.env.EXPO_PUBLIC_DEMO_MODE === "true";
 
 export default function App() {
-  const [showWebView, setShowWebView] = useState(false);
-  const [detectionEnabled, setDetectionEnabled] = useState(true);
   const [reportVisible, setReportVisible] = useState(false);
   const [isDemo, setIsDemo] = useState(DEMO_MODE_DEFAULT);
+  const [detectionEnabled, setDetectionEnabled] = useState(true);
 
   const {
     cameraRef,
@@ -52,10 +46,18 @@ export default function App() {
 
   if (!isDemo && (!hasPermission || !device)) return null;
 
-  if (showWebView) {
+  if (!detectionEnabled) {
     return (
-      <View style={styles.container}>
-        <ContributorWebViewScreen />
+      <View style={[styles.container, styles.stopped]}>
+        <Text style={styles.stoppedTitle}>Navigasi dihentikan</Text>
+        <Pressable
+          style={({ pressed }) => [styles.resumeButton, pressed && styles.pressed]}
+          onPress={() => setDetectionEnabled(true)}
+          accessibilityRole="button"
+        >
+          <Text style={styles.resumeButtonText}>Lanjutkan navigasi</Text>
+        </Pressable>
+        <StatusBar style="light" />
       </View>
     );
   }
@@ -75,39 +77,22 @@ export default function App() {
         />
       )}
 
-      <Pressable style={styles.demoToggle} onPress={() => setIsDemo((v) => !v)}>
-        <Text style={styles.demoToggleText}>{isDemo ? "Demo: ON" : "Demo: OFF"}</Text>
-      </Pressable>
-
-      <NavigationScreen 
-        hazards={hazards} 
-        onReportPress={() => setReportVisible(true)} 
+      <NavigationScreen
+        hazards={hazards}
+        onReportPress={() => setReportVisible(true)}
+        onClosePress={() => setDetectionEnabled(false)}
+        isDemo={isDemo}
+        onDemoToggle={() => setIsDemo((v) => !v)}
         fps={isDemo ? undefined : fps}
         depthAvailable={isDemo ? undefined : depthAvailable}
       />
 
-      {!isDemo && (
-        <View style={styles.debugBadge} pointerEvents="none">
-          <Text style={styles.debugBadgeText}>ARCore: {depthAvailable ? "ON" : "OFF"}</Text>
-          <Text style={styles.debugBadgeText}>FPS: {fps.toFixed(1)}</Text>
-        </View>
-      )}
-
-      {topHazard && (
-        <View style={styles.hazardBadge} pointerEvents="none">
-          <Text style={styles.hazardBadgeText}>
-            {topHazard.level.toUpperCase()}
-            {topHazard.distanceMeters != null ? ` · ${topHazard.distanceMeters.toFixed(1)}m` : ""}
-          </Text>
-        </View>
-      )}
-
       {isKritis && <HazardAlert hazard={topHazard} />}
 
-      <ReportSheet 
-        visible={reportVisible} 
-        onClose={() => setReportVisible(false)} 
-        onReport={handleReport} 
+      <ReportSheet
+        visible={reportVisible}
+        onClose={() => setReportVisible(false)}
+        onReport={handleReport}
       />
 
       {(isSubmitting || result || error) && (
@@ -130,49 +115,49 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.paper },
-  demoBackdrop: { backgroundColor: "#1a1a2e" },
-  demoToggle: {
-    position: "absolute",
-    top: 48,
-    right: 16,
-    backgroundColor: "rgba(0,0,0,0.6)",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    zIndex: 10,
+  container: { flex: 1, backgroundColor: colors.ink },
+  demoBackdrop: { backgroundColor: colors.ink },
+  stopped: {
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 32,
+    paddingHorizontal: 32,
   },
-  demoToggleText: { color: "white", fontWeight: "600" },
-  debugBadge: {
-    position: "absolute",
-    top: 48,
-    left: 16,
-    backgroundColor: "rgba(0,0,0,0.6)",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 10,
-    zIndex: 10,
+  stoppedTitle: {
+    color: colors.paper,
+    fontSize: 30,
+    lineHeight: 36,
+    fontWeight: "700",
+    textAlign: "center",
   },
-  debugBadgeText: { color: "#7CFC7C", fontSize: 12, fontWeight: "600" },
-  hazardBadge: {
-    position: "absolute",
-    bottom: 24,
-    left: 16,
-    backgroundColor: "rgba(0,0,0,0.7)",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 10,
-    zIndex: 10,
+  resumeButton: {
+    minHeight: 88,
+    width: "100%",
+    maxWidth: 320,
+    backgroundColor: colors.amber.solid,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 24,
   },
-  hazardBadgeText: { color: "yellow", fontSize: 13, fontWeight: "700" },
+  resumeButtonText: {
+    color: colors.ink,
+    fontSize: 16,
+    lineHeight: 22,
+    fontWeight: "700",
+  },
+  pressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.97 }],
+  },
   reportStatus: {
     position: "absolute",
     bottom: 24,
     left: 16,
     right: 16,
-    backgroundColor: "rgba(0,0,0,0.75)",
-    padding: 12,
-    borderRadius: 8,
+    backgroundColor: "rgba(20,24,31,0.85)",
+    padding: 16,
+    borderRadius: 16,
   },
-  reportStatusText: { color: "white", textAlign: "center" },
+  reportStatusText: { color: colors.paper, textAlign: "center", fontSize: 16, fontWeight: "700" },
 });

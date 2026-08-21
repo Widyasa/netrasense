@@ -34,3 +34,42 @@
     @apply outline-none ring-[3px] ring-ink-3 ring-offset-2 ring-offset-paper;
   }
 }
+
+/* Voice Orb — the only recurring animation in the app.
+   Disabled automatically for users who prefer reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes voice-echo {
+    0%, 100% {
+      opacity: 0.25;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+
+  .animate-voice-echo-1 {
+    animation: voice-echo 2.2s ease-in-out infinite;
+  }
+
+  .animate-voice-echo-2 {
+    animation: voice-echo 2.2s ease-in-out 0.55s infinite;
+  }
+
+  @keyframes voice-breathe {
+    0%, 100% {
+      opacity: 0.03;
+    }
+    50% {
+      opacity: 0.08;
+    }
+  }
+
+  .animate-voice-breathe-1 {
+    animation: voice-breathe 4s ease-in-out infinite;
+  }
+
+  .animate-voice-breathe-2 {
+    animation: voice-breathe 4s ease-in-out 1.3s infinite;
+  }
+}
+
